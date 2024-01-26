@@ -1,10 +1,11 @@
 package mr
 
-import "fmt"
-import "log"
-import "net/rpc"
-import "hash/fnv"
-
+import (
+	"fmt"
+	"hash/fnv"
+	"log"
+	"net/rpc"
+)
 
 //
 // Map functions return a slice of KeyValue.
@@ -31,14 +32,25 @@ func ihash(key string) int {
 func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
 
-	// Your worker implementation here.
-
-	// uncomment to send the Example RPC to the coordinator.
-	// CallExample()
-
+	// RPC call to get a task from coordinator
+	CallMapTask()
 }
 
-//
+func CallMapTask() {
+	// declare an argument structure.
+	args := MapTaskArgs{}
+	// fill in the argument(s).
+	reply := MapTaskReply{}
+	ok := call("Coordinator.GetTask", &args, &reply)
+	if ok {
+		// fmt.Printf("TaskType is: %v\n", reply.Task.Type)
+		fmt.Printf("TaskArgs: %+v\n", reply.Task)
+	} else {
+		fmt.Printf("call failed!\n")
+	}
+}
+
+
 // example function to show how to make an RPC call to the coordinator.
 //
 // the RPC argument and reply types are defined in rpc.go.
@@ -66,6 +78,8 @@ func CallExample() {
 		fmt.Printf("call failed!\n")
 	}
 }
+
+
 
 //
 // send an RPC request to the coordinator, wait for the response.

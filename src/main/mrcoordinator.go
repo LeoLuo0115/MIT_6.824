@@ -20,6 +20,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	//  把所有的文件名传给 MakeCoordinator
 	m := mr.MakeCoordinator(os.Args[1:], 10)
 	for m.Done() == false {
 		time.Sleep(time.Second)
