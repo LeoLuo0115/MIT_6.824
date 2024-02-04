@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 	"log"
 	"net/rpc"
+	"time"
 )
 
 //
@@ -31,16 +32,32 @@ func ihash(key string) int {
 //
 func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
-
+	
+	// fmt.Printf("I am worker")
 	// RPC call to get a task from coordinator
-	CallMapTask()
+	for {
+		reply := CallTask()
+		
+		switch reply.Task.TaskType {
+		case Map:
+			handleMapTask(reply.Task, mapf)
+			time.Sleep(1 * time.Second)
+		case Reduce:
+			handleReduceTask(reply.Task, reducef)
+		case Wait:
+			time.Sleep(3 * time.Second)
+		case Terminate:
+			return
+		}
+	}
+	
 }
 
-func CallMapTask() {
+func CallTask() TaskReply {
 	// declare an argument structure.
-	args := MapTaskArgs{}
+	args := TaskArgs{}
 	// fill in the argument(s).
-	reply := MapTaskReply{}
+	reply := TaskReply{}
 	ok := call("Coordinator.GetTask", &args, &reply)
 	if ok {
 		// fmt.Printf("TaskType is: %v\n", reply.Task.Type)
@@ -48,41 +65,19 @@ func CallMapTask() {
 	} else {
 		fmt.Printf("call failed!\n")
 	}
+	return reply
+}
+
+func handleMapTask (task Task, mapf func(string, string) []KeyValue) {
+	// 执行 map task
+}
+func handleReduceTask(task Task, reducef func(string, []string) string) {
+	
 }
 
 
-// example function to show how to make an RPC call to the coordinator.
 //
-// the RPC argument and reply types are defined in rpc.go.
-//
-func CallExample() {
-
-	// declare an argument structure.
-	args := ExampleArgs{}
-
-	// fill in the argument(s).
-	args.X = 99
-
-	// declare a reply structure.
-	reply := ExampleReply{}
-
-	// send the RPC request, wait for the reply.
-	// the "Coordinator.Example" tells the
-	// receiving server that we'd like to call
-	// the Example() method of struct Coordinator.
-	ok := call("Coordinator.Example", &args, &reply)
-	if ok {
-		// reply.Y should be 100.
-		fmt.Printf("reply.Y %v\n", reply.Y)
-	} else {
-		fmt.Printf("call failed!\n")
-	}
-}
-
-
-
-//
-// send an RPC request to the coordinator, wait for the response.
+// send an RPC request to the coordinator, wait for the replyonse.
 // usually returns true.
 // returns false if something goes wrong.
 //

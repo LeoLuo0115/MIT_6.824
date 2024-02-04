@@ -52,6 +52,7 @@ func main() {
 			log.Fatalf("cannot read %v", filename)
 		}
 		file.Close()
+		// kva 是 map 的输出，是一个切片存储了所有的 key-value 对
 		kva := mapf(filename, string(content))
 		intermediate = append(intermediate, kva...)
 	}
@@ -62,6 +63,7 @@ func main() {
 	// rather than being partitioned into NxM buckets.
 	//
 
+	// 按照key排序
 	sort.Sort(ByKey(intermediate))
 
 	oname := "mr-out-0"
@@ -93,9 +95,11 @@ func main() {
 		}
 		
 		// 调用 reduce 函数，计算的是在 intermediate 中所有具有相同 Key 的元素出现的次数。
+		// {words, {1,1,1,1,1}} -> 5
 		output := reducef(intermediate[i].Key, values)
 
 		// this is the correct format for each line of Reduce output.
+		// {words, {1,1,1,1,1}} -> {words, 5}
 		fmt.Fprintf(ofile, "%v %v\n", intermediate[i].Key, output)
 
 		i = j
